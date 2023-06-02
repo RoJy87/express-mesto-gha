@@ -18,7 +18,9 @@ module.exports.getCards = async (req, res) => {
 module.exports.createCard = async (req, res) => {
   try {
     const { _id } = req.user;
-    const { name, link, likes, createdAt } = req.body;
+    const {
+      name, link, likes, createdAt,
+    } = req.body;
     const card = await Card.create({
       name,
       link,
@@ -71,12 +73,12 @@ module.exports.deleteCard = async (req, res) => {
 module.exports.likeCard = async (req, res) => {
   try {
     let card = await Card.findById(req.params.cardId);
-    if (!card) throw new Error('ObjectId failed');
+    if (!card) throw new Error('validation failed');
     if (card.likes.includes(req.user._id)) throw new Error('validation failed');
     card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $addToSet: { likes: req.user._id } },
-      { new: true }
+      { new: true },
     );
     res.status(200).send({ data: card });
   } catch (err) {
@@ -106,14 +108,14 @@ module.exports.likeCard = async (req, res) => {
 module.exports.dislikeCard = async (req, res) => {
   try {
     let card = await Card.findById(req.params.cardId);
-    if (!card) throw new Error('ObjectId failed');
+    if (!card) throw new Error('validation failed');
     if (!card.likes.includes(req.user._id)) {
       throw new Error('validation failed');
     }
     card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $pull: { likes: req.user._id } },
-      { new: true }
+      { new: true },
     );
     res.status(200).send({ data: card });
   } catch (err) {

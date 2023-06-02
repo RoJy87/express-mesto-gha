@@ -18,10 +18,11 @@ module.exports.getUsers = async (req, res) => {
 module.exports.getUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
+    if (!user) throw new Error('ObjectId failed');
     res.status(200).send({ data: user });
   } catch (err) {
     if (err.message.includes('ObjectId failed')) {
-      res.status(404).send({
+      res.status(400).send({
         message: 'Пользователь не найден, введите корректные данные',
         err: err.message,
         stack: err.stack,
@@ -69,9 +70,9 @@ module.exports.updateUser = async (req, res) => {
       {
         new: true,
         runValidators: true,
-      }
+      },
     );
-    res.status(201).send({ data: user });
+    res.status(200).send({ data: user });
   } catch (err) {
     if (err.message.toLowerCase().includes('validation failed')) {
       res.status(400).send({
@@ -105,9 +106,9 @@ module.exports.updateUserAvatar = async (req, res) => {
       {
         new: true,
         runValidators: true,
-      }
+      },
     );
-    res.status(201).send({ data: user });
+    res.status(200).send({ data: user });
   } catch (err) {
     if (err.message.toLowerCase().includes('validation failed')) {
       res.status(400).send({
