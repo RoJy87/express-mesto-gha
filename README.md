@@ -1,8 +1,6 @@
 # Проект Mesto фронтенд + бэкенд - Серверная часть, Node.js (Express)
 
-[Ссылка на GHpages](https://rojy87.github.io/express-mesto-gha/)
-
-[![Tests](../../actions/workflows/tests-13-sprint.yml/badge.svg)](../../actions/workflows/tests-13-sprint.yml) [![Tests](../../actions/workflows/tests-14-sprint.yml/badge.svg)](../../actions/workflows/tests-14-sprint.yml)
+[Ссылка на GHpages](https://github.com/RoJy87/express-mesto-gha)
 
 ## Директории
 
