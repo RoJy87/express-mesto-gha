@@ -62,8 +62,7 @@ module.exports.deleteCard = async (req, res) => {
         err: err.message,
         stack: err.stack,
       });
-    }
-    else if (err.message.includes('ObjectId failed')) {
+    } else if (err.message.includes('ObjectId failed')) {
       res.status(404).send({
         message: 'Карточка не найдена, введите корректные данные',
         err: err.message,
@@ -84,8 +83,8 @@ module.exports.likeCard = async (req, res) => {
   try {
     if (req.params.cardId.length !== idLength) throw new Error('failed for value');
     let card = await Card.findById(req.params.cardId);
-    if (!card) throw new Error('failed for value');
-    if (card.likes.includes(req.user._id)) throw new Error('ObjectId failed');
+    if (!card) throw new Error('ObjectId failed');
+    if (card.likes.includes(req.user._id)) throw new Error('failed for value');
     card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $addToSet: { likes: req.user._id } },
@@ -120,9 +119,9 @@ module.exports.dislikeCard = async (req, res) => {
   try {
     if (req.params.cardId.length !== idLength) throw new Error('failed for value');
     let card = await Card.findById(req.params.cardId);
-    if (!card) throw new Error('failed for value');
+    if (!card) throw new Error('ObjectId failed');
     if (!card.likes.includes(req.user._id)) {
-      throw new Error('ObjectId failed');
+      throw new Error('failed for value');
     }
     card = await Card.findByIdAndUpdate(
       req.params.cardId,
