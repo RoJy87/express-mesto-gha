@@ -12,15 +12,16 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
 });
 
 app.use((req, res, next) => {
-  req.user = {
-    _id: '6478ed500ecb51a508d78131', // вставьте сюда _id созданного в предыдущем пункте пользователя
-  };
-
+  req.user = { _id: '6478ed500ecb51a508d78131' };
   next();
 });
 
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
+
+app.get('*', (req, res) => {
+  res.status(404).send({ message: 'Страница не найдена' });
+});
 
 app.listen(PORT, () => {
   console.log(`Серврер запущен на порту ${PORT}`);

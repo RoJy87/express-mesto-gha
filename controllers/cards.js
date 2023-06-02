@@ -1,6 +1,8 @@
 /* eslint-disable no-underscore-dangle */
 const Card = require('../models/card');
 
+const idLength = 24;
+
 module.exports.getCards = async (req, res) => {
   try {
     const cards = await Card.find({}).populate(['owner', 'likes']);
@@ -49,11 +51,19 @@ module.exports.createCard = async (req, res) => {
 
 module.exports.deleteCard = async (req, res) => {
   try {
+    if (req.params.cardId.length !== idLength) throw new Error('validation failed');
     const card = await Card.findByIdAndRemove(req.params.cardId);
     if (!card) throw new Error('ObjectId failed');
     res.status(200).send({ data: card });
   } catch (err) {
-    if (err.message.includes('ObjectId failed')) {
+    if (err.message.includes('validation failed')) {
+      res.status(400).send({
+        message: 'Переданы некорректные данные карточки, введите корректные данные',
+        err: err.message,
+        stack: err.stack,
+      });
+    }
+    else if (err.message.includes('ObjectId failed')) {
       res.status(404).send({
         message: 'Карточка не найдена, введите корректные данные',
         err: err.message,
@@ -72,9 +82,10 @@ module.exports.deleteCard = async (req, res) => {
 
 module.exports.likeCard = async (req, res) => {
   try {
+    if (req.params.cardId.length !== idLength) throw new Error('failed for value');
     let card = await Card.findById(req.params.cardId);
-    if (!card) throw new Error('validation failed');
-    if (card.likes.includes(req.user._id)) throw new Error('validation failed');
+    if (!card) throw new Error('failed for value');
+    if (card.likes.includes(req.user._id)) throw new Error('ObjectId failed');
     card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $addToSet: { likes: req.user._id } },
@@ -82,7 +93,7 @@ module.exports.likeCard = async (req, res) => {
     );
     res.status(200).send({ data: card });
   } catch (err) {
-    if (err.message.includes('validation failed')) {
+    if (err.message.includes('failed for value')) {
       res.status(400).send({
         message: 'Переданы некорректные данные для постановки/снятии лайка',
         err: err.message,
@@ -107,10 +118,11 @@ module.exports.likeCard = async (req, res) => {
 
 module.exports.dislikeCard = async (req, res) => {
   try {
+    if (req.params.cardId.length !== idLength) throw new Error('failed for value');
     let card = await Card.findById(req.params.cardId);
-    if (!card) throw new Error('validation failed');
+    if (!card) throw new Error('failed for value');
     if (!card.likes.includes(req.user._id)) {
-      throw new Error('validation failed');
+      throw new Error('ObjectId failed');
     }
     card = await Card.findByIdAndUpdate(
       req.params.cardId,
@@ -119,7 +131,7 @@ module.exports.dislikeCard = async (req, res) => {
     );
     res.status(200).send({ data: card });
   } catch (err) {
-    if (err.message.includes('validation failed')) {
+    if (err.message.includes('failed for value')) {
       res.status(400).send({
         message: 'Переданы некорректные данные для постановки/снятии лайка',
         err: err.message,

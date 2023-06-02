@@ -21,8 +21,14 @@ module.exports.getUser = async (req, res) => {
     if (!user) throw new Error('ObjectId failed');
     res.status(200).send({ data: user });
   } catch (err) {
-    if (err.message.includes('ObjectId failed')) {
+    if (err.message.includes('failed for value')) {
       res.status(400).send({
+        message: 'Переданы некорректные данные, введите корректные данные',
+        err: err.message,
+        stack: err.stack,
+      });
+    } else if (err.message.includes('ObjectId failed')) {
+      res.status(404).send({
         message: 'Пользователь не найден, введите корректные данные',
         err: err.message,
         stack: err.stack,
