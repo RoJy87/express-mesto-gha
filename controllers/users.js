@@ -1,46 +1,34 @@
 /* eslint-disable no-underscore-dangle */
 const User = require('../models/user');
+const { validationError, dataError, defaultError } = require('../utils/customError');
+
+const {
+  OK_CODE,
+  CREATED_CODE,
+} = require('../constants/constants');
 
 module.exports.getUsers = async (req, res) => {
   try {
     const users = await User.find({});
-    res.status(200).send({ data: users });
-  } catch (err) {
-    res.status(500).send({
-      message:
-        'Мы не знаем, что это за ошибка, если б мы знали, что это за ошибка, но мы не знаем, что это за ошибка',
-      err: err.message,
-      stack: err.stack,
-    });
-  }
+    res.status(OK_CODE).send({ data: users });
+  } catch (err) { defaultError({ err, res }); }
 };
 
 module.exports.getUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
     if (!user) throw new Error('ObjectId failed');
-    res.status(200).send({ data: user });
+    res.status(OK_CODE).send({ data: user });
   } catch (err) {
     if (err.message.includes('failed for value')) {
-      res.status(400).send({
+      validationError({
+        err,
         message: 'Переданы некорректные данные, введите корректные данные',
-        err: err.message,
-        stack: err.stack,
+        res,
       });
     } else if (err.message.includes('ObjectId failed')) {
-      res.status(404).send({
-        message: 'Пользователь не найден, введите корректные данные',
-        err: err.message,
-        stack: err.stack,
-      });
-    } else {
-      res.status(500).send({
-        message:
-          'Мы не знаем, что это за ошибка, если б мы знали, что это за ошибка, но мы не знаем, что это за ошибка',
-        err: err.message,
-        stack: err.stack,
-      });
-    }
+      dataError({ err, message: 'Пользователь не найден, введите корректные данные', res });
+    } else { defaultError({ err, res }); }
   }
 };
 
@@ -48,22 +36,15 @@ module.exports.createUser = async (req, res) => {
   try {
     const { name, about, avatar } = req.body;
     const user = await User.create({ name, about, avatar });
-    res.status(201).send({ data: user });
+    res.status(CREATED_CODE).send({ data: user });
   } catch (err) {
     if (err.message.includes('validation failed')) {
-      res.status(400).send({
-        message: 'Переданы некорректные данные при создании пользователя',
-        err: err.message,
-        stack: err.stack,
+      validationError({
+        err,
+        message: 'Переданы некорректные данные, введите корректные данные',
+        res,
       });
-    } else {
-      res.status(500).send({
-        message:
-          'Мы не знаем, что это за ошибка, если б мы знали, что это за ошибка, но мы не знаем, что это за ошибка',
-        err: err.message,
-        stack: err.stack,
-      });
-    }
+    } else { defaultError({ err, res }); }
   }
 };
 
@@ -78,28 +59,17 @@ module.exports.updateUser = async (req, res) => {
         runValidators: true,
       },
     );
-    res.status(200).send({ data: user });
+    res.status(OK_CODE).send({ data: user });
   } catch (err) {
     if (err.message.toLowerCase().includes('validation failed')) {
-      res.status(400).send({
+      validationError({
+        err,
         message: 'Переданы некорректные данные при обновлении профиля',
-        err: err.message,
-        stack: err.stack,
+        res,
       });
     } else if (err.message.includes('ObjectId failed')) {
-      res.status(404).send({
-        message: 'Пользователь не найден, введите корректные данные',
-        err: err.message,
-        stack: err.stack,
-      });
-    } else {
-      res.status(500).send({
-        message:
-          'Мы не знаем, что это за ошибка, если б мы знали, что это за ошибка, но мы не знаем, что это за ошибка',
-        err: err.message,
-        stack: err.stack,
-      });
-    }
+      dataError({ err, message: 'Пользователь не найден, введите корректные данные', res });
+    } else { defaultError({ err, res }); }
   }
 };
 
@@ -114,27 +84,16 @@ module.exports.updateUserAvatar = async (req, res) => {
         runValidators: true,
       },
     );
-    res.status(200).send({ data: user });
+    res.status(OK_CODE).send({ data: user });
   } catch (err) {
     if (err.message.toLowerCase().includes('validation failed')) {
-      res.status(400).send({
+      validationError({
+        err,
         message: 'Переданы некорректные данные при обновлении аватара',
-        err: err.message,
-        stack: err.stack,
+        res,
       });
     } else if (err.message.includes('ObjectId failed')) {
-      res.status(404).send({
-        message: 'Пользователь не найден, введите корректные данные',
-        err: err.message,
-        stack: err.stack,
-      });
-    } else {
-      res.status(500).send({
-        message:
-          'Мы не знаем, что это за ошибка, если б мы знали, что это за ошибка, но мы не знаем, что это за ошибка',
-        err: err.message,
-        stack: err.stack,
-      });
-    }
+      dataError({ err, message: 'Пользователь не найден, введите корректные данные', res });
+    } else { defaultError({ err, res }); }
   }
 };
