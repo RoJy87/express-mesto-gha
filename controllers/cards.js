@@ -37,10 +37,10 @@ module.exports.createCard = async (req, res) => {
 module.exports.deleteCard = async (req, res) => {
   try {
     const card = await Card.findByIdAndRemove(req.params.cardId);
-    if (!card) CustomError('ValidationError');
+    if (!card) CustomError('CastError');
     res.send({ data: card });
   } catch (err) {
-    if (err.name === 'ValidationError') {
+    if (err.message.includes('failed for value')) {
       validationError({
         message: 'Переданы некорректные данные карточки, введите корректные данные',
         res,
@@ -54,7 +54,7 @@ module.exports.deleteCard = async (req, res) => {
 module.exports.likeCard = async (req, res) => {
   try {
     let card = await Card.findById(req.params.cardId);
-    if (!card) CustomError('ValidationError');
+    if (!card) CustomError('CastError');
     if (card.likes.includes(req.user._id)) CustomError('ValidationError');
     card = await Card.findByIdAndUpdate(
       req.params.cardId,
@@ -63,7 +63,7 @@ module.exports.likeCard = async (req, res) => {
     );
     res.send({ data: card });
   } catch (err) {
-    if (err.name === 'ValidationError') {
+    if (err.message.includes('failed for value')) {
       validationError({
         message: 'Переданы некорректные данные для постановки/снятии лайка',
         res,
@@ -77,7 +77,7 @@ module.exports.likeCard = async (req, res) => {
 module.exports.dislikeCard = async (req, res) => {
   try {
     let card = await Card.findById(req.params.cardId);
-    if (!card) CustomError('ValidationError');
+    if (!card) CustomError('CastError');
     if (!card.likes.includes(req.user._id)) CustomError('ValidationError');
     card = await Card.findByIdAndUpdate(
       req.params.cardId,
@@ -86,7 +86,7 @@ module.exports.dislikeCard = async (req, res) => {
     );
     res.send({ data: card });
   } catch (err) {
-    if (err.name === 'ValidationError') {
+    if (err.message.includes('failed for value')) {
       validationError({
         err,
         message: 'Переданы некорректные данные для постановки/снятии лайка',
