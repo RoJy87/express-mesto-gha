@@ -1,38 +1,32 @@
-/* eslint-disable no-underscore-dangle */
 const Card = require('../models/card');
-const { validationError, dataError, defaultError } = require('../utils/customError');
+const {
+  validationError, dataError, defaultError, CustomError,
+} = require('../utils/customError');
 
 const {
-  OK_CODE,
   CREATED_CODE,
-  ID_LENGTH,
 } = require('../constants/constants');
 
 module.exports.getCards = async (req, res) => {
   try {
     const cards = await Card.find({}).populate(['owner', 'likes']);
-    res.status(OK_CODE).send({ data: cards });
-  } catch (err) { defaultError({ err, res }); }
+    res.send({ data: cards });
+  } catch (err) { defaultError({ res }); }
 };
 
 module.exports.createCard = async (req, res) => {
   try {
     const { _id } = req.user;
-    const {
-      name, link, likes, createdAt,
-    } = req.body;
+    const { name, link } = req.body;
     const card = await Card.create({
       name,
       link,
       owner: _id,
-      likes,
-      createdAt,
     });
     res.status(CREATED_CODE).send({ data: card });
   } catch (err) {
-    if (err.message.includes('validation failed')) {
+    if (err.name === 'ValidationError') {
       validationError({
-        err,
         message: 'Переданы некорректные данные при создании карточки',
         res,
       });
@@ -42,71 +36,64 @@ module.exports.createCard = async (req, res) => {
 
 module.exports.deleteCard = async (req, res) => {
   try {
-    if (req.params.cardId.length !== ID_LENGTH) throw new Error('validation failed');
     const card = await Card.findByIdAndRemove(req.params.cardId);
-    if (!card) throw new Error('ObjectId failed');
-    res.status(OK_CODE).send({ data: card });
+    if (!card) CustomError('ValidationError');
+    res.send({ data: card });
   } catch (err) {
-    if (err.message.includes('validation failed')) {
+    if (err.name === 'ValidationError') {
       validationError({
-        err,
         message: 'Переданы некорректные данные карточки, введите корректные данные',
         res,
       });
-    } else if (err.message.includes('ObjectId failed')) {
-      dataError({ err, message: 'Карточка не найдена, введите корректные данные', res });
-    } else { defaultError({ err, res }); }
+    } else if (err.name === 'CastError') {
+      dataError({ message: 'Карточка не найдена, введите корректные данные', res });
+    } else { defaultError({ res }); }
   }
 };
 
 module.exports.likeCard = async (req, res) => {
   try {
-    if (req.params.cardId.length !== ID_LENGTH) throw new Error('failed for value');
     let card = await Card.findById(req.params.cardId);
-    if (!card) throw new Error('ObjectId failed');
-    if (card.likes.includes(req.user._id)) throw new Error('failed for value');
+    if (!card) CustomError('ValidationError');
+    if (card.likes.includes(req.user._id)) CustomError('ValidationError');
     card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $addToSet: { likes: req.user._id } },
       { new: true },
     );
-    res.status(OK_CODE).send({ data: card });
+    res.send({ data: card });
   } catch (err) {
-    if (err.message.includes('failed for value')) {
+    if (err.name === 'ValidationError') {
       validationError({
-        err,
         message: 'Переданы некорректные данные для постановки/снятии лайка',
         res,
       });
-    } else if (err.message.includes('ObjectId failed')) {
-      dataError({ err, message: 'Передан несуществующий _id карточки', res });
-    } else { defaultError({ err, res }); }
+    } else if (err.name === 'CastError') {
+      dataError({ message: 'Передан несуществующий _id карточки', res });
+    } else { defaultError({ res }); }
   }
 };
 
 module.exports.dislikeCard = async (req, res) => {
   try {
-    if (req.params.cardId.length !== ID_LENGTH) throw new Error('failed for value');
     let card = await Card.findById(req.params.cardId);
-    if (!card) throw new Error('ObjectId failed');
-    if (!card.likes.includes(req.user._id)) {
-      throw new Error('failed for value');
-    }
+    if (!card) CustomError('ValidationError');
+    if (!card.likes.includes(req.user._id)) CustomError('ValidationError');
     card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $pull: { likes: req.user._id } },
       { new: true },
     );
-    res.status(OK_CODE).send({ data: card });
+    res.send({ data: card });
   } catch (err) {
-    if (err.message.includes('failed for value')) {
+    if (err.name === 'ValidationError') {
       validationError({
         err,
         message: 'Переданы некорректные данные для постановки/снятии лайка',
         res,
       });
-    } else if (err.message.includes('ObjectId failed')) {
-      dataError({ err, message: 'Передан несуществующий _id карточки', res });
-    } else { defaultError({ err, res }); }
+    } else if (err.name === 'CastError') {
+      dataError({ message: 'Передан несуществующий _id карточки', res });
+    } else { defaultError({ res }); }
   }
 };

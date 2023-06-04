@@ -4,26 +4,29 @@ const {
   DEFAULT_ERR,
 } = require('../constants/constants');
 
-module.exports.validationError = ({ err, message, res }) => {
+class CustomError extends Error {
+  constructor(name, message) {
+    super(message);
+    this.name = name;
+  }
+}
+
+module.exports.CustomError = (name, message = '') => { throw new CustomError(name, message); };
+
+module.exports.validationError = ({ message, res }) => {
   res.status(VALID_ERR).send({
     message,
-    err: err.message,
-    stack: err.stack,
   });
 };
 
-module.exports.dataError = ({ err, message, res }) => {
+module.exports.dataError = ({ message, res }) => {
   res.status(DATA_ERR).send({
     message,
-    err: err.message,
-    stack: err.stack,
   });
 };
 
-module.exports.defaultError = ({ err, res }) => {
+module.exports.defaultError = ({ res }) => {
   res.status(DEFAULT_ERR).send({
     message: 'Мы не знаем, что это за ошибка, если б мы знали, что это за ошибка, но мы не знаем, что это за ошибка',
-    err: err.message,
-    stack: err.stack,
   });
 };
