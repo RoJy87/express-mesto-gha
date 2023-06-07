@@ -17,15 +17,15 @@ module.exports.getUsers = async (req, res) => {
 module.exports.getUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
-    if (!user) CustomError('CastError');
+    if (!user) CustomError('NotFound');
     res.send({ data: user });
   } catch (err) {
-    if (err.message.includes('failed for value')) {
+    if (err.name === 'CastError') {
       validationError({
         message: 'Переданы некорректные данные, введите корректные данные',
         res,
       });
-    } else if (err.name === 'CastError') {
+    } else if (err.name === 'NotFound') {
       dataError({ message: 'Пользователь не найден, введите корректные данные', res });
     } else { defaultError({ res }); }
   }
