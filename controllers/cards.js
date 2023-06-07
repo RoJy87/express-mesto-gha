@@ -63,7 +63,6 @@ module.exports.likeCard = async (req, res) => {
     );
     res.send({ data: card });
   } catch (err) {
-    console.log(err.name)
     if (err.message.includes('failed for value') || err.name === 'ValidationError') {
       validationError({
         message: 'Переданы некорректные данные для постановки/снятии лайка',
@@ -87,7 +86,6 @@ module.exports.dislikeCard = async (req, res) => {
     );
     res.send({ data: card });
   } catch (err) {
-    console.log(err.name)
     if (err.message.includes('failed for value') || err.name === 'ValidationError') {
       validationError({
         err,
