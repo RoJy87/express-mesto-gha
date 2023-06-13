@@ -6,6 +6,7 @@ const AuthError = require('../middlewares/errors/AuthError');
 const NotFoundError = require('../middlewares/errors/NotFoundError');
 
 const { CREATED_CODE } = require('../constants/constants');
+const CreateUserError = require('../middlewares/errors/CreateUserError');
 
 module.exports.getUsers = async (req, res, next) => {
   try {
@@ -44,8 +45,17 @@ module.exports.createUser = async (req, res, next) => {
       email,
       password: hash,
     });
-    res.status(CREATED_CODE).send({ email: user.email, _id: user._id });
-  } catch (err) { next(err); }
+    const userData = Object.keys(user._doc)
+      .filter((key) => key !== 'password')
+      .reduce((acc, key) => { acc[key] = user._doc[key]; return acc; }, {});
+
+    return res.status(CREATED_CODE).send(userData);
+  } catch (err) {
+    if (err.code === 11000) {
+      return next(new CreateUserError('Такой пользователь уже существует'));
+    }
+    return next(err);
+  }
 };
 
 module.exports.login = async (req, res, next) => {
