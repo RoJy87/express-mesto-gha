@@ -1,17 +1,20 @@
 const Card = require('../models/card');
 const {
-  validationError, dataError, defaultError, CustomError,
+  validationError,
+  dataError,
+  defaultError,
+  CustomError,
 } = require('../utils/customError');
 
-const {
-  CREATED_CODE,
-} = require('../constants/constants');
+const { CREATED_CODE } = require('../constants/constants');
 
 module.exports.getCards = async (req, res) => {
   try {
     const cards = await Card.find({}).populate(['owner', 'likes']);
     res.send({ data: cards });
-  } catch (err) { defaultError({ res }); }
+  } catch (err) {
+    defaultError({ res });
+  }
 };
 
 module.exports.createCard = async (req, res) => {
@@ -30,24 +33,35 @@ module.exports.createCard = async (req, res) => {
         message: 'Переданы некорректные данные при создании карточки',
         res,
       });
-    } else { defaultError({ err, res }); }
+    } else {
+      defaultError({ err, res });
+    }
   }
 };
 
 module.exports.deleteCard = async (req, res) => {
   try {
-    const card = await Card.findByIdAndRemove(req.params.cardId);
+    const { _id } = req.user;
+    let card = await Card.findOne(req.params.cardId);
     if (!card) CustomError('CastError');
+    if (card.owner !== _id) CustomError('CastError');
+    card = await Card.findByIdAndRemove(req.params.cardId);
     res.send({ data: card });
   } catch (err) {
     if (err.message.includes('failed for value')) {
       validationError({
-        message: 'Переданы некорректные данные карточки, введите корректные данные',
+        message:
+          'Переданы некорректные данные карточки, введите корректные данные',
         res,
       });
     } else if (err.name === 'CastError') {
-      dataError({ message: 'Карточка не найдена, введите корректные данные', res });
-    } else { defaultError({ res }); }
+      dataError({
+        message: 'Карточка не найдена, введите корректные данные',
+        res,
+      });
+    } else {
+      defaultError({ res });
+    }
   }
 };
 
@@ -59,18 +73,23 @@ module.exports.likeCard = async (req, res) => {
     card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $addToSet: { likes: req.user._id } },
-      { new: true },
+      { new: true }
     );
     res.send({ data: card });
   } catch (err) {
-    if (err.message.includes('failed for value') || err.name === 'ValidationError') {
+    if (
+      err.message.includes('failed for value') ||
+      err.name === 'ValidationError'
+    ) {
       validationError({
         message: 'Переданы некорректные данные для постановки/снятии лайка',
         res,
       });
     } else if (err.name === 'CastError') {
       dataError({ message: 'Передан несуществующий _id карточки', res });
-    } else { defaultError({ res }); }
+    } else {
+      defaultError({ res });
+    }
   }
 };
 
@@ -82,11 +101,14 @@ module.exports.dislikeCard = async (req, res) => {
     card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $pull: { likes: req.user._id } },
-      { new: true },
+      { new: true }
     );
     res.send({ data: card });
   } catch (err) {
-    if (err.message.includes('failed for value') || err.name === 'ValidationError') {
+    if (
+      err.message.includes('failed for value') ||
+      err.name === 'ValidationError'
+    ) {
       validationError({
         err,
         message: 'Переданы некорректные данные для постановки/снятии лайка',
@@ -94,6 +116,8 @@ module.exports.dislikeCard = async (req, res) => {
       });
     } else if (err.name === 'CastError') {
       dataError({ message: 'Передан несуществующий _id карточки', res });
-    } else { defaultError({ res }); }
+    } else {
+      defaultError({ res });
+    }
   }
 };
