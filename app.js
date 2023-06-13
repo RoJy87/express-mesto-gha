@@ -1,12 +1,27 @@
+require('dotenv').config();
 const express = require('express');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
 const mongoose = require('mongoose');
+const cookieParser = require('cookie-parser');
+const { celebrate, Joi, errors } = require('celebrate');
 const { createUser, login } = require('./controllers/users');
 const auth = require('./middlewares/auth');
-const { celebrate, Joi, errors } = require('celebrate');
 
 const { PORT = 3000 } = process.env;
 
 const app = express();
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+});
+
+app.use(limiter);
+
+app.use(helmet());
+
+app.use(cookieParser());
 
 mongoose.connect('mongodb://localhost:27017/mestodb', {
   useNewUrlParser: true,
@@ -22,7 +37,7 @@ app.post(
       password: Joi.string().required().min(8),
     }),
   }),
-  login
+  login,
 );
 app.post(
   '/signup',
@@ -35,7 +50,7 @@ app.post(
       about: Joi.string().min(2).max(30),
     }),
   }),
-  createUser
+  createUser,
 );
 
 app.use('/', auth);

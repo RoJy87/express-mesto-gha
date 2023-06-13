@@ -17,6 +17,11 @@ module.exports = async (req, res, next) => {
   }
 
   req.user = payload;
+  res.cookie('token', token, {
+    maxAge: 3600000 * 24 * 7,
+    httpOnly: true,
+    sameSite: true,
+  });
 
   next();
 };

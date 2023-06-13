@@ -17,7 +17,7 @@ router.get(
       userId: Joi.string().alphanum().length(24),
     }),
   }),
-  getUser
+  getUser,
 );
 
 router.get('/me', getCurrentUser);

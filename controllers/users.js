@@ -1,6 +1,8 @@
+const { NODE_ENV, JWT_SECRET } = process.env;
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const escape = require('escape-html');
 const User = require('../models/user');
 const {
   validationError,
@@ -14,7 +16,7 @@ const { CREATED_CODE } = require('../constants/constants');
 module.exports.getUsers = async (req, res) => {
   try {
     const users = await User.find({});
-    res.send({ data: users });
+    res.send(users);
   } catch (err) {
     defaultError({ res });
   }
@@ -96,9 +98,13 @@ module.exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findUserByCredentials(email, password);
-    const token = jwt.sign({ _id: user._id }, 'some-secret-key', {
-      expiresIn: '7d',
-    });
+    const token = jwt.sign(
+      { _id: user._id },
+      NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
+      {
+        expiresIn: '7d',
+      }
+    );
     res.send({ user, message: 'Всё верно!', token });
   } catch (err) {
     if (err.name === 'ValidationError') {
@@ -129,7 +135,7 @@ module.exports.updateUser = async (req, res) => {
       }
     );
     if (!user) CustomError('CastError');
-    res.send({ data: user });
+    res.send(escape(user));
   } catch (err) {
     if (err.name === 'ValidationError') {
       validationError({
@@ -159,7 +165,7 @@ module.exports.updateUserAvatar = async (req, res) => {
       }
     );
     if (!user) CustomError('CastError');
-    res.send({ data: user });
+    res.send(escape(user));
   } catch (err) {
     if (err.name === 'ValidationError') {
       validationError({
