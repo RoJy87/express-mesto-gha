@@ -1,79 +1,42 @@
 const { NODE_ENV, JWT_SECRET } = process.env;
-const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const escape = require('escape-html');
 const User = require('../models/user');
-const {
-  validationError,
-  dataError,
-  defaultError,
-  CustomError,
-} = require('../utils/customError');
+const AuthError = require('../middlewares/errors/AuthError');
+const NotFoundError = require('../middlewares/errors/NotFoundError');
 
 const { CREATED_CODE } = require('../constants/constants');
 
-module.exports.getUsers = async (req, res) => {
+module.exports.getUsers = async (req, res, next) => {
   try {
     const users = await User.find({});
     res.send(users);
-  } catch (err) {
-    defaultError({ res });
-  }
+  } catch (err) { next(err); }
 };
 
-module.exports.getUser = async (req, res) => {
+module.exports.getUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.userId);
-    if (!user) CustomError('NotFound');
-    res.send({ data: user });
-  } catch (err) {
-    if (err.name === 'CastError') {
-      validationError({
-        message: 'Переданы некорректные данные, введите корректные данные',
-        res,
-      });
-    } else if (err.name === 'NotFound') {
-      dataError({
-        message: 'Пользователь не найден, введите корректные данные',
-        res,
-      });
-    } else {
-      defaultError({ res });
-    }
-  }
+    if (!user) throw new NotFoundError('Пользователь не найден, введите корректные данные');
+    res.send(user);
+  } catch (err) { next(err); }
 };
 
-module.exports.getCurrentUser = async (req, res) => {
+module.exports.getCurrentUser = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email } = req.body;
     const user = await User.findOne({ email }).select('+password');
-    if (!user) CustomError('NotFound');
-    res.send({ data: user });
-  } catch (err) {
-    if (err.name === 'CastError') {
-      validationError({
-        message: 'Переданы некорректные данные, введите корректные данные',
-        res,
-      });
-    } else if (err.name === 'NotFound') {
-      dataError({
-        message: 'Пользователь не найден, введите корректные данные',
-        res,
-      });
-    } else {
-      defaultError({ res });
-    }
-  }
+    if (!user) throw new NotFoundError('Пользователь не найден, введите корректные данные');
+    res.send(user);
+  } catch (err) { next(err); }
 };
 
-module.exports.createUser = async (req, res) => {
+module.exports.createUser = async (req, res, next) => {
   try {
+    const {
+      name, about, avatar, email,
+    } = req.body;
     const hash = await bcrypt.hash(req.body.password, 10);
-    const { name, about, avatar, email } = req.body;
-    if (!validator.isEmail(email)) {
-      CustomError('ValidationError');
-    }
     const user = await User.create({
       name,
       about,
@@ -82,48 +45,29 @@ module.exports.createUser = async (req, res) => {
       password: hash,
     });
     res.status(CREATED_CODE).send({ email: user.email, _id: user._id });
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      validationError({
-        message: 'Переданы некорректные данные, введите корректные данные',
-        res,
-      });
-    } else {
-      defaultError({ res });
-    }
-  }
+  } catch (err) { next(err); }
 };
 
-module.exports.login = async (req, res) => {
+module.exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findUserByCredentials(email, password);
+    const user = await User.findUserByCredentials(email, password, next);
     const token = jwt.sign(
       { _id: user._id },
       NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
       {
         expiresIn: '7d',
-      }
+      },
     );
-    res.send({ user, message: 'Всё верно!', token });
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      validationError({
-        message: err.message,
-        res,
-      });
-    } else if (err.name === 'CastError') {
-      dataError({
-        message: err.message,
-        res,
-      });
-    } else {
-      defaultError({ res });
-    }
-  }
+    res.cookie('token', token, {
+      maxAge: 3600000 * 24 * 7,
+      httpOnly: true,
+      sameSite: true,
+    }).send(user);
+  } catch (err) { next(err); }
 };
 
-module.exports.updateUser = async (req, res) => {
+module.exports.updateUser = async (req, res, next) => {
   try {
     const { name, about } = req.body;
     const user = await User.findByIdAndUpdate(
@@ -132,28 +76,14 @@ module.exports.updateUser = async (req, res) => {
       {
         new: true,
         runValidators: true,
-      }
+      },
     );
-    if (!user) CustomError('CastError');
-    res.send(escape(user));
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      validationError({
-        message: 'Переданы некорректные данные при обновлении профиля',
-        res,
-      });
-    } else if (err.name === 'CastError') {
-      dataError({
-        message: 'Пользователь не найден, введите корректные данные',
-        res,
-      });
-    } else {
-      defaultError({ res });
-    }
-  }
+    if (!user) throw new AuthError('Пользователь не найден, введите корректные данные');
+    res.send(user);
+  } catch (err) { next(err); }
 };
 
-module.exports.updateUserAvatar = async (req, res) => {
+module.exports.updateUserAvatar = async (req, res, next) => {
   try {
     const { avatar } = req.body;
     const user = await User.findByIdAndUpdate(
@@ -162,23 +92,9 @@ module.exports.updateUserAvatar = async (req, res) => {
       {
         new: true,
         runValidators: true,
-      }
+      },
     );
-    if (!user) CustomError('CastError');
-    res.send(escape(user));
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      validationError({
-        message: 'Переданы некорректные данные при обновлении аватара',
-        res,
-      });
-    } else if (err.name === 'CastError') {
-      dataError({
-        message: 'Пользователь не найден, введите корректные данные',
-        res,
-      });
-    } else {
-      defaultError({ res });
-    }
-  }
+    if (!user) throw new AuthError('Пользователь не найден, введите корректные данные');
+    res.send(user);
+  } catch (err) { next(err); }
 };

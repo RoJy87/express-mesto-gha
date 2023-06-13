@@ -1,23 +1,17 @@
 const Card = require('../models/card');
-const {
-  validationError,
-  dataError,
-  defaultError,
-  CustomError,
-} = require('../utils/customError');
+const AuthError = require('../middlewares/errors/AuthError');
+const NotFoundError = require('../middlewares/errors/NotFoundError');
 
 const { CREATED_CODE } = require('../constants/constants');
 
-module.exports.getCards = async (req, res) => {
+module.exports.getCards = async (req, res, next) => {
   try {
     const cards = await Card.find({}).populate(['owner', 'likes']);
-    res.send({ data: cards });
-  } catch (err) {
-    defaultError({ res });
-  }
+    res.send(cards);
+  } catch (err) { next(err); }
 };
 
-module.exports.createCard = async (req, res) => {
+module.exports.createCard = async (req, res, next) => {
   try {
     const { _id } = req.user;
     const { name, link } = req.body;
@@ -26,98 +20,46 @@ module.exports.createCard = async (req, res) => {
       link,
       owner: _id,
     });
-    res.status(CREATED_CODE).send({ data: card });
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      validationError({
-        message: 'Переданы некорректные данные при создании карточки',
-        res,
-      });
-    } else {
-      defaultError({ err, res });
-    }
-  }
+    res.status(CREATED_CODE).send(card);
+  } catch (err) { next(err); }
 };
 
-module.exports.deleteCard = async (req, res) => {
+module.exports.deleteCard = async (req, res, next) => {
   try {
     const { _id } = req.user;
     let card = await Card.findOne(req.params.cardId);
-    if (!card) CustomError('CastError');
-    if (card.owner !== _id) CustomError('CastError');
-    card = await Card.findByIdAndRemove(req.params.cardId);
-    res.send({ data: card });
-  } catch (err) {
-    if (err.message.includes('failed for value')) {
-      validationError({
-        message:
-          'Переданы некорректные данные карточки, введите корректные данные',
-        res,
-      });
-    } else if (err.name === 'CastError') {
-      dataError({
-        message: 'Карточка не найдена, введите корректные данные',
-        res,
-      });
-    } else {
-      defaultError({ res });
+    if (!card || card.owner !== _id) {
+      throw new NotFoundError('Переданы некорректные данные');
     }
-  }
+    card = await Card.findByIdAndRemove(req.params.cardId);
+    res.send(card);
+  } catch (err) { next(err); }
 };
 
-module.exports.likeCard = async (req, res) => {
+module.exports.likeCard = async (req, res, next) => {
   try {
     let card = await Card.findById(req.params.cardId);
-    if (!card) CustomError('CastError');
-    if (card.likes.includes(req.user._id)) CustomError('ValidationError');
+    if (!card) throw new NotFoundError('Карточка не найдена');
+    if (card.likes.includes(req.user._id)) throw new AuthError('Переданы некорректные данные');
     card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $addToSet: { likes: req.user._id } },
-      { new: true }
+      { new: true },
     );
-    res.send({ data: card });
-  } catch (err) {
-    if (
-      err.message.includes('failed for value') ||
-      err.name === 'ValidationError'
-    ) {
-      validationError({
-        message: 'Переданы некорректные данные для постановки/снятии лайка',
-        res,
-      });
-    } else if (err.name === 'CastError') {
-      dataError({ message: 'Передан несуществующий _id карточки', res });
-    } else {
-      defaultError({ res });
-    }
-  }
+    res.send(card);
+  } catch (err) { next(err); }
 };
 
-module.exports.dislikeCard = async (req, res) => {
+module.exports.dislikeCard = async (req, res, next) => {
   try {
     let card = await Card.findById(req.params.cardId);
-    if (!card) CustomError('CastError');
-    if (!card.likes.includes(req.user._id)) CustomError('ValidationError');
+    if (!card) throw new NotFoundError('Карточка не найдена');
+    if (!card.likes.includes(req.user._id)) throw new AuthError('Переданы некорректные данные');
     card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $pull: { likes: req.user._id } },
-      { new: true }
+      { new: true },
     );
-    res.send({ data: card });
-  } catch (err) {
-    if (
-      err.message.includes('failed for value') ||
-      err.name === 'ValidationError'
-    ) {
-      validationError({
-        err,
-        message: 'Переданы некорректные данные для постановки/снятии лайка',
-        res,
-      });
-    } else if (err.name === 'CastError') {
-      dataError({ message: 'Передан несуществующий _id карточки', res });
-    } else {
-      defaultError({ res });
-    }
-  }
+    res.send(card);
+  } catch (err) { next(err); }
 };
