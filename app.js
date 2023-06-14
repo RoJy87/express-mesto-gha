@@ -8,6 +8,8 @@ const { celebrate, Joi, errors } = require('celebrate');
 const { createUser, login } = require('./controllers/users');
 const auth = require('./middlewares/auth');
 
+const paternUrl = /^(http:\/\/|https:\/\/)(www\.)?[a-zA-Z0-9\-._~:/?#\[\]@!\$&'()*+,;=]+(#\w*)?$/;
+
 const { PORT = 3000 } = process.env;
 
 const app = express();
@@ -45,7 +47,7 @@ app.post(
     body: Joi.object().keys({
       name: Joi.string().min(2).max(30),
       about: Joi.string().min(2).max(30),
-      avatar: Joi.string().uri(),
+      avatar: Joi.string().regex(paternUrl),
       email: Joi.string().required().email(),
       password: Joi.string().required().min(8),
     }),

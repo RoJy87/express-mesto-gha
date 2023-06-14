@@ -25,8 +25,8 @@ module.exports.getUser = async (req, res, next) => {
 
 module.exports.getCurrentUser = async (req, res, next) => {
   try {
-    const { email } = req.body;
-    const user = await User.findOne({ email }).select('+password');
+    const { _id } = req.user;
+    const user = await User.findOne({ _id }).select('+password');
     if (!user) throw new NotFoundError('Пользователь не найден, введите корректные данные');
     res.send(user);
   } catch (err) { next(err); }

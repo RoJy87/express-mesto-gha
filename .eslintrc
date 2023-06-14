@@ -6,6 +6,7 @@
       {
         "allow": ["_id", "_doc"]
       }
-    ]
+    ],
+    "no-useless-escape": "off"
   }
 }
