@@ -1,9 +1,8 @@
 const Card = require('../models/card');
 const AuthError = require('../middlewares/errors/AuthError');
-const NotFoundError = require('../middlewares/errors/NotFoundError');
+const ForbiddenError = require('../middlewares/errors/ForbiddenError');
 
 const { CREATED_CODE } = require('../constants/constants');
-const ForbiddenError = require('../middlewares/errors/ForbiddenError');
 
 module.exports.getCards = async (req, res, next) => {
   try {
@@ -28,10 +27,7 @@ module.exports.createCard = async (req, res, next) => {
 module.exports.deleteCard = async (req, res, next) => {
   try {
     const { _id } = req.user;
-    let card = await Card.findById(req.params.cardId);
-    if (!card) {
-      throw new NotFoundError('Переданы некорректные данные');
-    }
+    let card = await Card.findCardById(req.params.cardId, next);
     if (card.owner.toString() !== _id) {
       throw new ForbiddenError('Нет доступа к карточке');
     }
@@ -42,8 +38,7 @@ module.exports.deleteCard = async (req, res, next) => {
 
 module.exports.likeCard = async (req, res, next) => {
   try {
-    let card = await Card.findById(req.params.cardId);
-    if (!card) throw new NotFoundError('Карточка не найдена');
+    let card = await Card.findCardById(req.params.cardId, next);
     if (card.likes.includes(req.user._id)) throw new AuthError('Переданы некорректные данные');
     card = await Card.findByIdAndUpdate(
       req.params.cardId,
@@ -56,8 +51,7 @@ module.exports.likeCard = async (req, res, next) => {
 
 module.exports.dislikeCard = async (req, res, next) => {
   try {
-    let card = await Card.findById(req.params.cardId);
-    if (!card) throw new NotFoundError('Карточка не найдена');
+    let card = await Card.findCardById(req.params.cardId, next);
     if (!card.likes.includes(req.user._id)) throw new AuthError('Переданы некорректные данные');
     card = await Card.findByIdAndUpdate(
       req.params.cardId,

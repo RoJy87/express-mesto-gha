@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const NotFoundError = require('../middlewares/errors/NotFoundError');
 
 const cardSchema = new mongoose.Schema({
   name: {
@@ -26,5 +27,14 @@ const cardSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+cardSchema.statics.findCardById = async function (cardId, next) {
+  let card;
+  try {
+    card = await this.findById(cardId);
+    if (!card) { throw new NotFoundError('Карточка не найдена'); }
+  } catch (err) { next(err); }
+  return card;
+};
 
 module.exports = mongoose.model('card', cardSchema);
