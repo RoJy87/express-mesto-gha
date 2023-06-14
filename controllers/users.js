@@ -76,7 +76,7 @@ module.exports.login = async (req, res, next) => {
       maxAge: 3600000 * 24 * 7,
       httpOnly: true,
       sameSite: true,
-    }).send(user);
+    }).send(hidePassword(user));
   } catch (err) { next(err); }
 };
 
