@@ -4,7 +4,7 @@ const { PATERN_URL } = require('../constants/constants');
 const { login, createUser } = require('../controllers/users');
 
 router.post(
-  '/',
+  '/signin',
   celebrate({
     body: Joi.object().keys({
       email: Joi.string().required().email(),
@@ -15,7 +15,7 @@ router.post(
 );
 
 router.post(
-  '/',
+  '/signup',
   celebrate({
     body: Joi.object().keys({
       name: Joi.string().min(2).max(30),

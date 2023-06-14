@@ -25,8 +25,7 @@ app.use(helmet());
 app.use(cookieParser());
 app.use(express.json());
 
-app.use('/signin', require('./routes/auth'));
-app.use('/signup', require('./routes/auth'));
+app.use('/', require('./routes/auth'));
 
 app.use('/', auth);
 
