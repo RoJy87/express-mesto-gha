@@ -8,6 +8,13 @@ const NotFoundError = require('../middlewares/errors/NotFoundError');
 const { CREATED_CODE } = require('../constants/constants');
 const CreateUserError = require('../middlewares/errors/CreateUserError');
 
+const hidePassword = (user) => {
+  const userData = Object.keys(user._doc)
+    .filter((key) => key !== 'password')
+    .reduce((acc, key) => { acc[key] = user._doc[key]; return acc; }, {});
+  return userData;
+};
+
 module.exports.getUsers = async (req, res, next) => {
   try {
     const users = await User.find({});
@@ -26,7 +33,7 @@ module.exports.getUser = async (req, res, next) => {
 module.exports.getCurrentUser = async (req, res, next) => {
   try {
     const { _id } = req.user;
-    const user = await User.findOne({ _id }).select('+password');
+    const user = await User.findOne({ _id });
     if (!user) throw new NotFoundError('Пользователь не найден, введите корректные данные');
     res.send(user);
   } catch (err) { next(err); }
@@ -45,11 +52,7 @@ module.exports.createUser = async (req, res, next) => {
       email,
       password: hash,
     });
-    const userData = Object.keys(user._doc)
-      .filter((key) => key !== 'password')
-      .reduce((acc, key) => { acc[key] = user._doc[key]; return acc; }, {});
-
-    return res.status(CREATED_CODE).send(userData);
+    return res.status(CREATED_CODE).send(hidePassword(user));
   } catch (err) {
     if (err.code === 11000) {
       return next(new CreateUserError('Такой пользователь уже существует'));

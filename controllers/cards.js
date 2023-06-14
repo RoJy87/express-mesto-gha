@@ -3,6 +3,7 @@ const AuthError = require('../middlewares/errors/AuthError');
 const NotFoundError = require('../middlewares/errors/NotFoundError');
 
 const { CREATED_CODE } = require('../constants/constants');
+const ForbiddenError = require('../middlewares/errors/ForbiddenError');
 
 module.exports.getCards = async (req, res, next) => {
   try {
@@ -27,9 +28,12 @@ module.exports.createCard = async (req, res, next) => {
 module.exports.deleteCard = async (req, res, next) => {
   try {
     const { _id } = req.user;
-    let card = await Card.findOne(req.params.cardId);
-    if (!card || card.owner !== _id) {
+    let card = await Card.findById(req.params.cardId);
+    if (!card) {
       throw new NotFoundError('Переданы некорректные данные');
+    }
+    if (card.owner.toString() !== _id) {
+      throw new ForbiddenError('Нет доступа к карточке');
     }
     card = await Card.findByIdAndRemove(req.params.cardId);
     res.send(card);

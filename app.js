@@ -7,8 +7,7 @@ const cookieParser = require('cookie-parser');
 const { celebrate, Joi, errors } = require('celebrate');
 const { createUser, login } = require('./controllers/users');
 const auth = require('./middlewares/auth');
-
-const paternUrl = /^(http:\/\/|https:\/\/)(www\.)?[a-zA-Z0-9\-._~:/?#\[\]@!\$&'()*+,;=]+(#\w*)?$/;
+const { PATERN_URL } = require('./constants/constants');
 
 const { PORT = 3000 } = process.env;
 
@@ -47,7 +46,7 @@ app.post(
     body: Joi.object().keys({
       name: Joi.string().min(2).max(30),
       about: Joi.string().min(2).max(30),
-      avatar: Joi.string().regex(paternUrl),
+      avatar: Joi.string().regex(PATERN_URL),
       email: Joi.string().required().email(),
       password: Joi.string().required().min(8),
     }),
