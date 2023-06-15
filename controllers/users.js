@@ -2,11 +2,10 @@ const { NODE_ENV, JWT_SECRET } = process.env;
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
-const AuthError = require('../middlewares/errors/AuthError');
 const NotFoundError = require('../middlewares/errors/NotFoundError');
-
-const { CREATED_CODE } = require('../constants/constants');
 const CreateUserError = require('../middlewares/errors/CreateUserError');
+const ValidationError = require('../middlewares/errors/ValidationError');
+const { CREATED_CODE } = require('../constants/constants');
 
 const hidePassword = (user) => {
   const userData = Object.keys(user._doc)
@@ -52,12 +51,15 @@ module.exports.createUser = async (req, res, next) => {
       email,
       password: hash,
     });
-    return res.status(CREATED_CODE).send(hidePassword(user));
+    res.status(CREATED_CODE).send(hidePassword(user));
   } catch (err) {
-    if (err.code === 11000) {
-      return next(new CreateUserError('Такой пользователь уже существует'));
+    if (err.name === 'ValidationError') {
+      next(new ValidationError('Некорректные данные при создании карточки'));
     }
-    return next(err);
+    if (err.code === 11000) {
+      next(new CreateUserError('Такой пользователь уже существует'));
+    }
+    next(err);
   }
 };
 
@@ -80,6 +82,12 @@ module.exports.login = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+module.exports.logout = async (req, res, next) => {
+  try {
+    res.clearCookie('token').send({ message: 'Выход' });
+  } catch (err) { next(err); }
+};
+
 module.exports.updateUser = async (req, res, next) => {
   try {
     const { name, about } = req.body;
@@ -91,9 +99,14 @@ module.exports.updateUser = async (req, res, next) => {
         runValidators: true,
       },
     );
-    if (!user) throw new AuthError('Пользователь не найден, введите корректные данные');
+    if (!user) throw new NotFoundError('Пользователь не найден, введите корректные данные');
     res.send(user);
-  } catch (err) { next(err); }
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      next(new ValidationError('Некорректные данные при создании карточки'));
+    }
+    next(err);
+  }
 };
 
 module.exports.updateUserAvatar = async (req, res, next) => {
@@ -107,7 +120,12 @@ module.exports.updateUserAvatar = async (req, res, next) => {
         runValidators: true,
       },
     );
-    if (!user) throw new AuthError('Пользователь не найден, введите корректные данные');
+    if (!user) throw new NotFoundError('Пользователь не найден, введите корректные данные');
     res.send(user);
-  } catch (err) { next(err); }
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      next(new ValidationError('Некорректные данные при создании карточки'));
+    }
+    next(err);
+  }
 };

@@ -28,7 +28,7 @@ const cardSchema = new mongoose.Schema({
   },
 });
 
-cardSchema.statics.findCardById = async function (cardId, next) {
+cardSchema.statics.findCardById = async function findCard(cardId, next) {
   let card;
   try {
     card = await this.findById(cardId);

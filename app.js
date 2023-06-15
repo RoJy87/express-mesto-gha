@@ -6,6 +6,8 @@ const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const { errors } = require('celebrate');
 const auth = require('./middlewares/auth');
+const NotFoundError = require('./middlewares/errors/NotFoundError');
+const customErrors = require('./middlewares/errors/customErrors');
 
 const { PORT = 3000 } = process.env;
 
@@ -32,18 +34,12 @@ app.use('/', auth);
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
 
-app.all('*', (req, res) => {
-  res.status(404).send({ message: 'Страница не найдена' });
+app.all('*', (req, res, next) => {
+  next(new NotFoundError('Страница не найдена'));
 });
 
 app.use(errors());
 
-app.use((err, req, res, next) => {
-  const { statusCode = 500, message } = err;
-  res.status(statusCode).send({
-    message: statusCode === 500 ? 'На сервере произошла ошибка' : message,
-  });
-  next();
-});
+app.use(customErrors);
 
 app.listen(PORT);
