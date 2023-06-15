@@ -18,7 +18,6 @@ router.post(
     body: Joi.object().keys({
       name: Joi.string().required().min(2).max(30),
       link: Joi.string().required().regex(PATERN_URL),
-      owner: Joi.string().alphanum().length(24),
     }),
   }),
   createCard,
@@ -28,10 +27,8 @@ router.delete(
   '/:cardId',
   celebrate({
     params: Joi.object().keys({
-      cardId: Joi.string().alphanum().length(24),
+      cardId: Joi.string().length(24).hex().required(),
     }),
-    headers: Joi.object().keys({}).unknown(true),
-    query: Joi.object().keys({}).unknown(true),
   }),
   deleteCard,
 );
@@ -40,7 +37,7 @@ router.put(
   '/:cardId/likes',
   celebrate({
     params: Joi.object().keys({
-      cardId: Joi.string().alphanum().length(24),
+      cardId: Joi.string().length(24).hex().required(),
     }),
   }),
   likeCard,
@@ -50,7 +47,7 @@ router.delete(
   '/:cardId/likes',
   celebrate({
     params: Joi.object().keys({
-      cardId: Joi.string().alphanum().length(24),
+      cardId: Joi.string().length(24).hex().required(),
     }),
   }),
   dislikeCard,

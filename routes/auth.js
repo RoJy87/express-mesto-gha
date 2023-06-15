@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const { celebrate, Joi } = require('celebrate');
 const { PATERN_URL } = require('../constants/constants');
-const { login, createUser } = require('../controllers/users');
+const { login, logout, createUser } = require('../controllers/users');
 
 router.post(
   '/signin',
@@ -13,6 +13,8 @@ router.post(
   }),
   login,
 );
+
+router.post('/signout', logout);
 
 router.post(
   '/signup',

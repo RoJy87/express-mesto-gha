@@ -1,5 +1,5 @@
 const Card = require('../models/card');
-const AuthError = require('../middlewares/errors/AuthError');
+const ValidationError = require('../middlewares/errors/ValidationError');
 const ForbiddenError = require('../middlewares/errors/ForbiddenError');
 
 const { CREATED_CODE } = require('../constants/constants');
@@ -21,7 +21,11 @@ module.exports.createCard = async (req, res, next) => {
       owner: _id,
     });
     res.status(CREATED_CODE).send(card);
-  } catch (err) { next(err); }
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      next(new ValidationError('Некорректные данные при создании карточки'));
+    } else { next(err); }
+  }
 };
 
 module.exports.deleteCard = async (req, res, next) => {
@@ -39,7 +43,6 @@ module.exports.deleteCard = async (req, res, next) => {
 module.exports.likeCard = async (req, res, next) => {
   try {
     let card = await Card.findCardById(req.params.cardId, next);
-    if (card.likes.includes(req.user._id)) throw new AuthError('Переданы некорректные данные');
     card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $addToSet: { likes: req.user._id } },
@@ -52,7 +55,6 @@ module.exports.likeCard = async (req, res, next) => {
 module.exports.dislikeCard = async (req, res, next) => {
   try {
     let card = await Card.findCardById(req.params.cardId, next);
-    if (!card.likes.includes(req.user._id)) throw new AuthError('Переданы некорректные данные');
     card = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $pull: { likes: req.user._id } },
