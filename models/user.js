@@ -35,6 +35,12 @@ const userSchema = new mongoose.Schema({
   },
 });
 
+userSchema.methods.hidePassword = function hidePassword() {
+  const user = this.toObject();
+  delete user.password;
+  return user;
+};
+
 userSchema.statics.findUserByCredentials = async function findUser(email, password, next) {
   let user;
   try {
@@ -42,7 +48,7 @@ userSchema.statics.findUserByCredentials = async function findUser(email, passwo
     if (!user) {
       throw new AuthError('Неправильные почта или пароль');
     }
-    const matched = await bcrypt.compare(password, user.password);
+    const matched = await bcrypt.compare(String(password), user.password);
     if (!matched) {
       throw new AuthError('Неправильные почта или пароль');
     }

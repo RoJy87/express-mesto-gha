@@ -8,6 +8,8 @@ const { errors } = require('celebrate');
 const auth = require('./middlewares/auth');
 const NotFoundError = require('./middlewares/errors/NotFoundError');
 const customErrors = require('./middlewares/errors/customErrors');
+const { requestLogger, errorLogger } = require('./middlewares/logger');
+const cors = require('./middlewares/cors');
 
 const { PORT = 3000 } = process.env;
 
@@ -27,6 +29,10 @@ app.use(helmet());
 app.use(cookieParser());
 app.use(express.json());
 
+app.use(requestLogger);
+
+app.use(cors);
+
 app.use('/', require('./routes/auth'));
 
 app.use('/', auth);
@@ -37,6 +43,8 @@ app.use('/cards', require('./routes/cards'));
 app.all('*', (req, res, next) => {
   next(new NotFoundError('Страница не найдена'));
 });
+
+app.use(errorLogger);
 
 app.use(errors());
 
