@@ -7,13 +7,6 @@ const CreateUserError = require('../middlewares/errors/CreateUserError');
 const ValidationError = require('../middlewares/errors/ValidationError');
 const { CREATED_CODE } = require('../constants/constants');
 
-const hidePassword = (user) => {
-  const userData = Object.keys(user._doc)
-    .filter((key) => key !== 'password')
-    .reduce((acc, key) => { acc[key] = user._doc[key]; return acc; }, {});
-  return userData;
-};
-
 module.exports.getUsers = async (req, res, next) => {
   try {
     const users = await User.find({});
@@ -43,7 +36,7 @@ module.exports.createUser = async (req, res, next) => {
     const {
       name, about, avatar, email,
     } = req.body;
-    const hash = await bcrypt.hash(req.body.password, 10);
+    const hash = await bcrypt.hash(toString(req.body.password), 10);
     const user = await User.create({
       name,
       about,
@@ -51,7 +44,7 @@ module.exports.createUser = async (req, res, next) => {
       email,
       password: hash,
     });
-    res.status(CREATED_CODE).send(hidePassword(user));
+    res.status(CREATED_CODE).send(user.hidePassword());
   } catch (err) {
     if (err.name === 'ValidationError') {
       next(new ValidationError('Некорректные данные при создании карточки'));
@@ -66,7 +59,7 @@ module.exports.createUser = async (req, res, next) => {
 module.exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findUserByCredentials(email, password, next);
+    const user = await User.findUserByCredentials(email, toString(password), next);
     const token = jwt.sign(
       { _id: user._id },
       NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
@@ -78,7 +71,7 @@ module.exports.login = async (req, res, next) => {
       maxAge: 3600000 * 24 * 7,
       httpOnly: true,
       sameSite: true,
-    }).send(hidePassword(user));
+    }).send(user.hidePassword());
   } catch (err) { next(err); }
 };
 
