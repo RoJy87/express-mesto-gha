@@ -1,6 +1,7 @@
 const allowedCors = [
   'https://simon.mesto.nomoreparties.sbs/',
   'localhost:3000',
+  'localhost:3001',
 ];
 
 module.exports = (req, res, next) => {
