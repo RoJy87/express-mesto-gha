@@ -9,7 +9,7 @@ const auth = require('./middlewares/auth');
 const NotFoundError = require('./middlewares/errors/NotFoundError');
 const customErrors = require('./middlewares/errors/customErrors');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
-/* const cors = require('./middlewares/cors'); */
+const cors = require('./middlewares/cors');
 
 const { PORT = 3000 } = process.env;
 
@@ -31,7 +31,7 @@ app.use(express.json());
 
 app.use(requestLogger);
 
-/* app.use(cors); */
+app.use(cors);
 
 app.use('/', require('./routes/auth'));
 
