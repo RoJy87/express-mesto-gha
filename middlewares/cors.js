@@ -1,9 +1,7 @@
 const allowedCors = [
-  'https://api.simon.mesto.nomoreparties.sbs/',
-  'https://simon.mesto.nomoreparties.sbs/',
+  'https://api.simon.mesto.nomoreparties.sbs',
+  'https://simon.mesto.nomoreparties.sbs',
   'https://localhost',
-  'https://localhost:3000',
-  'https://localhost:3001',
 ];
 
 module.exports = (req, res, next) => {
@@ -13,11 +11,11 @@ module.exports = (req, res, next) => {
   const requestHeaders = req.headers['access-control-request-headers'];
   if (allowedCors.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', true);
   }
   if (method === 'OPTIONS') {
     res.header('Access-Control-Allow-Methods', DEFAULT_ALLOWED_METHODS);
     res.header('Access-Control-Allow-Headers', requestHeaders);
-    res.end();
   }
-  return next();
+  next();
 };
