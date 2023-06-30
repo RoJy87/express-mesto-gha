@@ -6,7 +6,7 @@ const { CREATED_CODE } = require('../constants/constants');
 
 module.exports.getCards = async (req, res, next) => {
   try {
-    const cards = await Card.find({}).populate(['owner', 'likes']);
+    const cards = await Card.find({});
     res.send(cards);
   } catch (err) { next(err); }
 };
