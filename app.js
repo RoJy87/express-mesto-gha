@@ -34,6 +34,7 @@ app.use(express.json());
 app.use(cors({
   origin: [
     'http://localhost:3001',
+    'http://localhost:3000',
     'https://api.simon.mesto.nomoreparties.sbs',
     'https://simon.mesto.nomoreparties.sbs',
   ],

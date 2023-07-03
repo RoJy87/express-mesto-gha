@@ -36,7 +36,7 @@ module.exports.createUser = async (req, res, next) => {
     const {
       name, about, avatar, email,
     } = req.body;
-    const hash = await bcrypt.hash(toString(req.body.password), 10);
+    const hash = await bcrypt.hash(req.body.password, 10);
     const user = await User.create({
       name,
       about,
@@ -59,7 +59,7 @@ module.exports.createUser = async (req, res, next) => {
 module.exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findUserByCredentials(email, toString(password), next);
+    const user = await User.findUserByCredentials(email, password, next);
     const token = jwt.sign(
       { _id: user._id },
       NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',

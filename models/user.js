@@ -48,7 +48,8 @@ userSchema.statics.findUserByCredentials = async function findUser(email, passwo
     if (!user) {
       throw new AuthError('Неправильные почта или пароль');
     }
-    const matched = await bcrypt.compare(String(password), user.password);
+    const matched = await bcrypt.compare(password, user.password);
+
     if (!matched) {
       throw new AuthError('Неправильные почта или пароль');
     }
